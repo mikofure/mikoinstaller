@@ -1,0 +1,37 @@
+#include <windows.h>
+
+// Define resource IDs
+#define IDI_APP_ICON 101
+
+// Embed the application icon
+IDI_APP_ICON ICON "app.ico"
+
+// Version information
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION 1,0,0,0
+PRODUCTVERSION 1,0,0,0
+FILEFLAGSMASK 0x3fL
+FILEFLAGS 0x0L
+FILEOS 0x40004L
+FILETYPE 0x1L
+FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "CompanyName", "MikoIDE"
+            VALUE "FileDescription", "MikoIDE Installer"
+            VALUE "FileVersion", "1.0.0.0"
+            VALUE "InternalName", "MikoIDEInstaller"
+            VALUE "LegalCopyright", "Copyright (C) 2025"
+            VALUE "OriginalFilename", "MikoIDEInstaller.exe"
+            VALUE "ProductName", "MikoIDE Installer"
+            VALUE "ProductVersion", "1.0.0.0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
