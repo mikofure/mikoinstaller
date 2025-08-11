@@ -36,15 +36,39 @@ add_subdirectory("${SDL2_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/SDL2" EXCLUDE
 
 
 
-# Create executable with resource file
+# Create executables - console version for testing
+set(CONSOLE_INSTALLER_SOURCES
+    src/console_main.cpp
+    src/utils/system_utils.cpp
+    src/installer/installation_manager.cpp
+)
+
+set(GUI_INSTALLER_SOURCES
+    src/main.cpp
+    src/gui/installer_window.cpp
+    src/gui/window_utils.cpp
+    src/utils/system_utils.cpp
+    src/installer/installation_manager.cpp
+)
+
+# Console installer (no GUI dependencies)
+add_executable(installer_console ${CONSOLE_INSTALLER_SOURCES})
+target_include_directories(installer_console PRIVATE 
+    "${CMAKE_CURRENT_SOURCE_DIR}/src"
+)
+
+# GUI installer with SDL2 and resource file
 if(WIN32)
-    add_executable(installer WIN32 src/main.cpp assets/resource.rc)
+    add_executable(installer WIN32 ${GUI_INSTALLER_SOURCES} assets/resource.rc)
 else()
-    add_executable(installer src/main.cpp)
+    add_executable(installer ${GUI_INSTALLER_SOURCES})
 endif()
 
-# Include SDL2 headers
-target_include_directories(installer PRIVATE "${SDL2_SOURCE_DIR}/include")
+# Include directories for GUI version
+target_include_directories(installer PRIVATE 
+    "${SDL2_SOURCE_DIR}/include"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src"
+)
 
 # Link static SDL2 libraries
 target_link_libraries(installer PRIVATE SDL2-static SDL2main)
