@@ -1,7 +1,8 @@
+#include <windows.h>
+#include <dwmapi.h>
 #include "window_utils.h"
 #include "installer_window.h"
 #include "../config/app_config.h"
-#include <dwmapi.h>
 #include <iostream>
 #include <string>
 

@@ -3,7 +3,8 @@
 #include "../config/app_config.h"
 #include "../fonts/InterVariable.h"
 #include "../images/banner.h"
-#include "../framework/nuklear_sdl_renderer.h"
+#include "framework/nuklear.h"
+#include "framework/nuklear_sdl_renderer.h"
 #include <iostream>
 #include <commdlg.h>
 #include <shlobj.h>
@@ -26,6 +27,7 @@ InstallerWindow::InstallerWindow()
     , windowRect{}
     , normalRect{}
 {
+    std::cout << "DEBUG: InstallerWindow constructor finished" << std::endl;
 }
 
 InstallerWindow::~InstallerWindow() {
@@ -33,20 +35,50 @@ InstallerWindow::~InstallerWindow() {
 }
 
 bool InstallerWindow::Initialize() {
-    if (!InitializeSDL()) return false;
-    if (!InitializeWindow()) return false;
-    if (!InitializeRenderer()) return false;
-    if (!LoadBackgroundImage()) return false;
-    if (!InitializeNuklear()) return false;
+    std::cout << "DEBUG: Starting Initialize()" << std::endl;
+    
+    if (!InitializeSDL()) {
+        std::cout << "DEBUG: InitializeSDL() failed" << std::endl;
+        return false;
+    }
+    std::cout << "DEBUG: InitializeSDL() succeeded" << std::endl;
+    
+    if (!InitializeWindow()) {
+        std::cout << "DEBUG: InitializeWindow() failed" << std::endl;
+        return false;
+    }
+    std::cout << "DEBUG: InitializeWindow() succeeded" << std::endl;
+    
+    if (!InitializeRenderer()) {
+        std::cout << "DEBUG: InitializeRenderer() failed" << std::endl;
+        return false;
+    }
+    std::cout << "DEBUG: InitializeRenderer() succeeded" << std::endl;
+    
+    if (!LoadBackgroundImage()) {
+        std::cout << "DEBUG: LoadBackgroundImage() failed" << std::endl;
+        return false;
+    }
+    std::cout << "DEBUG: LoadBackgroundImage() succeeded" << std::endl;
+    
+    if (!InitializeNuklear()) {
+        std::cout << "DEBUG: InitializeNuklear() failed" << std::endl;
+        return false;
+    }
+    std::cout << "DEBUG: InitializeNuklear() succeeded" << std::endl;
     
     SetupWindowsIntegration();
+    std::cout << "DEBUG: SetupWindowsIntegration() succeeded" << std::endl;
+    
     SetupCustomStyle();
+    std::cout << "DEBUG: SetupCustomStyle() succeeded" << std::endl;
     
     // Initialize window state
     isMaximized = false;
     GetWindowRect(hwnd, &normalRect);
     
     running = true;
+    std::cout << "DEBUG: Initialize() completed successfully" << std::endl;
     return true;
 }
 
@@ -79,6 +111,8 @@ bool InstallerWindow::InitializeRenderer() {
         std::cerr << "Renderer could not be created! SDL_Error: " << SDL_GetError() << std::endl;
         return false;
     }
+    // Ensure alpha blending for Nuklear geometry/text
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
     
     // Scale renderer for High-DPI displays
     int render_w, render_h;
@@ -95,60 +129,66 @@ bool InstallerWindow::InitializeRenderer() {
 
 bool InstallerWindow::InitializeNuklear() {
     ctx = nk_sdl_init(window, renderer);
-    
-    // Load custom fonts
-    struct nk_font_atlas *atlas;
-    struct nk_font_config config = nk_font_config(0);
-    
+    if (!ctx) {
+        return false;
+    }
+    // Bake and set Inter font (embedded) so Nuklear has a width function and style font
+    struct nk_font_atlas* atlas = nullptr;
     nk_sdl_font_stash_begin(&atlas);
-    
-    // Load InterVariable font from memory
-    config.oversample_h = 2;
-    config.oversample_v = 2;
-    config.pixel_snap = true;
-    font = nk_font_atlas_add_from_memory(atlas, (void*)InterVariable_ttf, sizeof(InterVariable_ttf), 16, &config);
-    
-    // Load Segoe Fluent Icons for window controls (optional)
-    struct nk_font_config iconConfig = nk_font_config(0);
-    iconConfig.oversample_h = 1;
-    iconConfig.oversample_v = 1;
-    iconConfig.pixel_snap = true;
-    // Use default range for now
-    iconFont = nk_font_atlas_add_default(atlas, 16, &iconConfig);
-    
+    // Prefer Inter from embedded TTF; fallback to Nuklear default if it fails
+    struct nk_font_config cfg = nk_font_config(0);
+    cfg.oversample_h = 2; // match original oversampling for smoother text
+    cfg.oversample_v = 2;
+    cfg.pixel_snap = nk_true;
+    font = nk_font_atlas_add_from_memory(
+        atlas,
+        InterVariable_ttf,
+        (nk_size)InterVariable_ttf_len,
+        16.0f,
+        &cfg
+    );
+    if (font) {
+        atlas->default_font = font; // make it the default for stash_end()
+    }
+
+    if (!font) {
+        font = nk_font_atlas_add_default(atlas, 16.0f, nullptr);
+    }
     nk_sdl_font_stash_end();
-    
     if (font) {
         nk_style_set_font(ctx, &font->handle);
+    std::cout << "DEBUG: Inter font applied to Nuklear style" << std::endl;
     }
     
     return true;
 }
 
 bool InstallerWindow::LoadBackgroundImage() {
-    // Load image from binary data in banner.h
-    SDL_RWops* rw = SDL_RWFromConstMem(__image_bmp, __image_bmp_len);
+    // Load embedded BMP from memory into an SDL texture
+    if (backgroundTexture) {
+        SDL_DestroyTexture(backgroundTexture);
+        backgroundTexture = nullptr;
+    }
+
+    SDL_RWops* rw = SDL_RWFromConstMem(__image_bmp, (int)__image_bmp_len);
     if (!rw) {
-        std::cerr << "Failed to create RWops from binary data: " << SDL_GetError() << std::endl;
+        std::cerr << "Failed to create RWops for banner image: " << SDL_GetError() << std::endl;
         return false;
     }
-    
-    // Load surface from BMP binary data
-    SDL_Surface* surface = SDL_LoadBMP_RW(rw, 1);
+
+    SDL_Surface* surface = SDL_LoadBMP_RW(rw, 1); // 1 => SDL will free rw
     if (!surface) {
-        std::cerr << "Failed to load BMP from binary data: " << SDL_GetError() << std::endl;
+        std::cerr << "Failed to load BMP from memory: " << SDL_GetError() << std::endl;
         return false;
     }
-    
-    // Create texture from surface
+
     backgroundTexture = SDL_CreateTextureFromSurface(renderer, surface);
     SDL_FreeSurface(surface);
-    
     if (!backgroundTexture) {
-        std::cerr << "Failed to create texture: " << SDL_GetError() << std::endl;
+        std::cerr << "Failed to create texture from banner surface: " << SDL_GetError() << std::endl;
         return false;
     }
-    
+
     return true;
 }
 

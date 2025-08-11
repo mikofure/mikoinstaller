@@ -131,17 +131,17 @@ namespace Utils {
     }
     
     bool AddToPath(const std::string& path) {
-        std::string currentPath = GetEnvironmentVariable("PATH");
+        std::string currentPath = GetEnvVariable("PATH");
         if (currentPath.find(path) != std::string::npos) {
             return true; // Already in PATH
         }
         
         std::string newPath = currentPath + ";" + path;
-        return SetEnvironmentVariable("PATH", newPath);
+        return SetEnvVariable("PATH", newPath);
     }
     
     bool RemoveFromPath(const std::string& path) {
-        std::string currentPath = GetEnvironmentVariable("PATH");
+        std::string currentPath = GetEnvVariable("PATH");
         size_t pos = currentPath.find(path);
         
         if (pos != std::string::npos) {
@@ -154,15 +154,15 @@ namespace Utils {
                 currentPath.erase(pos, 1);
             }
             
-            return SetEnvironmentVariable("PATH", currentPath);
+            return SetEnvVariable("PATH", currentPath);
         }
         
         return true; // Not found, nothing to remove
     }
     
-    std::string GetEnvironmentVariable(const std::string& name) {
+    std::string GetEnvVariable(const std::string& name) {
         char buffer[32768]; // Windows max environment variable size
-        DWORD result = GetEnvironmentVariableA(name.c_str(), buffer, sizeof(buffer));
+        DWORD result = ::GetEnvironmentVariableA(name.c_str(), buffer, sizeof(buffer));
         
         if (result > 0 && result < sizeof(buffer)) {
             return std::string(buffer);
@@ -171,7 +171,7 @@ namespace Utils {
         return "";
     }
     
-    bool SetEnvironmentVariable(const std::string& name, const std::string& value) {
-        return SetEnvironmentVariableA(name.c_str(), value.c_str()) != 0;
+    bool SetEnvVariable(const std::string& name, const std::string& value) {
+        return ::SetEnvironmentVariableA(name.c_str(), value.c_str()) != 0;
     }
 }

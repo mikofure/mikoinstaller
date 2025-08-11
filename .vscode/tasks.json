@@ -1,0 +1,115 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "build-installer",
+			"type": "shell",
+			"command": "cmake --build build --config Debug",
+			"args": [],
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "build-installer",
+			"type": "shell",
+			"command": "cmake --build build --config Debug",
+			"args": [],
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "build-installer-release",
+			"type": "shell",
+			"command": "cmake --build build --config Release",
+			"args": [],
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "build-installer",
+			"type": "shell",
+			"command": "cmake --build build --config Debug",
+			"args": [],
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "build-installer-release",
+			"type": "shell",
+			"command": "cmake --build build --config Release",
+			"args": [],
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "build-installer",
+			"type": "shell",
+			"command": "cmake --build build --config Debug",
+			"args": [],
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "build-installer",
+			"type": "shell",
+			"command": "cmake --build build --config Debug",
+			"args": [],
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "build-installer-release",
+			"type": "shell",
+			"command": "cmake --build build --config Release",
+			"args": [],
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "build-installer-release",
+			"type": "shell",
+			"command": "cmake --build build --config Release",
+			"args": [],
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "build-installer",
+			"type": "shell",
+			"command": "cmake --build build --config Debug",
+			"args": [],
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "build-installer-release",
+			"type": "shell",
+			"command": "cmake --build build --config Release",
+			"args": [],
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		}
+	]
+}

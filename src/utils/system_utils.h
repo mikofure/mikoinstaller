@@ -28,6 +28,6 @@ namespace Utils {
     // Environment utilities
     bool AddToPath(const std::string& path);
     bool RemoveFromPath(const std::string& path);
-    std::string GetEnvironmentVariable(const std::string& name);
-    bool SetEnvironmentVariable(const std::string& name, const std::string& value);
+    std::string GetEnvVariable(const std::string& name);
+    bool SetEnvVariable(const std::string& name, const std::string& value);
 }

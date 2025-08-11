@@ -1,8 +1,8 @@
 #include <iostream>
 #include <string>
-#include "../config/app_config.h"
-#include "../utils/system_utils.h"
-#include "../installer/installation_manager.h"
+#include "config/app_config.h"
+#include "utils/system_utils.h"
+#include "installer/installation_manager.h"
 
 int main(int argc, char* argv[]) {
     std::cout << "=== " << APP_TITLE << " ===" << std::endl;
@@ -15,12 +15,12 @@ int main(int argc, char* argv[]) {
     bool addToPath = true;
     bool assignFileExtension = true;
 
-    std::cout << "Default installation path: " << Utils::GetEnvironmentVariable("LOCALAPPDATA") + "\\" + DEFAULT_INSTALL_SUBDIR << std::endl;
+    std::cout << "Default installation path: " << Utils::GetEnvVariable("LOCALAPPDATA") + "\\" + DEFAULT_INSTALL_SUBDIR << std::endl;
     std::cout << "Use default path? (y/n): ";
     std::cin >> choice;
 
     if (choice == 'y' || choice == 'Y') {
-        installPath = Utils::GetEnvironmentVariable("LOCALAPPDATA") + "\\" + DEFAULT_INSTALL_SUBDIR;
+        installPath = Utils::GetEnvVariable("LOCALAPPDATA") + "\\" + DEFAULT_INSTALL_SUBDIR;
     } else {
         std::cout << "Enter installation path: ";
         std::cin.ignore();

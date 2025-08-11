@@ -4,7 +4,20 @@
 #include <SDL_syswm.h>
 #include <windows.h>
 #include <string>
-#include "../framework/nuklear.h"
+// Ensure Nuklear API declarations used in this TU are available
+#ifndef NK_INCLUDE_FONT_BAKING
+#define NK_INCLUDE_FONT_BAKING
+#endif
+#ifndef NK_INCLUDE_DEFAULT_FONT
+#define NK_INCLUDE_DEFAULT_FONT
+#endif
+#ifndef NK_INCLUDE_STANDARD_IO
+#define NK_INCLUDE_STANDARD_IO
+#endif
+#ifndef NK_INCLUDE_STANDARD_VARARGS
+#define NK_INCLUDE_STANDARD_VARARGS
+#endif
+#include "framework/nuklear.h"
 
 class InstallerWindow {
 public:
