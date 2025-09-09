@@ -7,30 +7,31 @@ using System.Windows.Media.Imaging;
 using System.Windows.Input;
 using MikoInstaller.Utils;
 
-public class InstallerWizard : Window
+public class UninstallerWizard : Window
 {
     private Grid _mainGrid;
     private Border _contentArea;
     private ProgressBar _progressBar;
     private TextBlock _statusText;
-    private Button _installButton;
+    private Button _uninstallButton;
     private CheckBox _agreeCheckBox;
     private TextBox _pathTextBox;
     private TextBlock _spaceLabel;
-    private int _currentScreen = 0; // 0: Welcome, 1: Installing, 2: Completed
+    private int _currentScreen = 0; // 0: Welcome, 1: Uninstalling, 2: Completed
+    private static BitmapImage _cachedBannerImage; // Cache for banner image
     
-    public InstallerWizard()
+    public UninstallerWizard()
     {
-        // Initialize configuration
-        Config.Initialize();
-        
         InitializeWindow();
         InitializeComponents();
+        
+        // Initialize configuration asynchronously to avoid blocking UI
+        Task.Run(() => Config.Initialize());
     }
     
     private void InitializeWindow()
         {
-            Title = $"{Config.Current.ApplicationName} Installer";
+            Title = $"{Config.Current.ApplicationName} Uninstaller";
             Width = 800;
             Height = 320;
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
@@ -43,20 +44,13 @@ public class InstallerWizard : Window
     
     private void InitializeComponents()
     {
-        // Main container with rounded corners and shadow effect
+        // Main container - simplified for better performance
         var mainContainer = new Border
         {
             Background = new SolidColorBrush(Color.FromRgb(32, 32, 32)),
             BorderBrush = new SolidColorBrush(Color.FromRgb(64, 64, 64)),
-            BorderThickness = new Thickness(1),
-            Effect = new System.Windows.Media.Effects.DropShadowEffect
-            {
-                Color = Colors.Black,
-                Direction = 315,
-                ShadowDepth = 5,
-                Opacity = 0.3,
-                BlurRadius = 10
-            }
+            BorderThickness = new Thickness(1)
+            // Removed DropShadowEffect for faster rendering
         };
         
         _mainGrid = new Grid();
@@ -174,14 +168,41 @@ public class InstallerWizard : Window
         sideGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
         sideGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         
-        // Main image/logo area
+        // Main image/logo area with lazy loading
         var logoContainer = new Image
         {
-            Source = new BitmapImage(new Uri("pack://application:,,,/assets/banner.png")),
             Stretch = Stretch.Uniform,
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
         };
+        
+        // Load image asynchronously to avoid blocking UI
+        Task.Run(() => {
+            if (_cachedBannerImage == null)
+            {
+                try
+                {
+                    _cachedBannerImage = new BitmapImage();
+                    _cachedBannerImage.BeginInit();
+                    _cachedBannerImage.UriSource = new Uri("pack://application:,,,/assets/banner.png");
+                    _cachedBannerImage.CacheOption = BitmapCacheOption.OnLoad;
+                    _cachedBannerImage.EndInit();
+                    _cachedBannerImage.Freeze(); // Make it thread-safe
+                }
+                catch
+                {
+                    _cachedBannerImage = null;
+                }
+            }
+            
+            Dispatcher.Invoke(() => {
+                if (_cachedBannerImage != null)
+                {
+                    logoContainer.Source = _cachedBannerImage;
+                }
+            });
+        });
+        
         Grid.SetRow(logoContainer, 0);
         sideGrid.Children.Add(logoContainer);
         
@@ -204,55 +225,13 @@ public class InstallerWizard : Window
         // Header
         var titleText = new TextBlock
         {
-            Text = Config.Current.UIStrings.ExpandString(Config.Current.UIStrings.WelcomeTitle),
-            FontSize = 20,
+            Text = $"Are you sure you want to uninstall {Config.Current.ApplicationName}?",
+            FontSize = 18,
             FontWeight = FontWeights.SemiBold,
             Foreground = new SolidColorBrush(Color.FromRgb(220, 220, 220)),
-            Margin = new Thickness(0, 0, 0, 4)
+            Margin = new Thickness(0, 0, 0, 30),
+            TextWrapping = TextWrapping.Wrap
         };
-        
-        // Installation Path Section
-        var pathLabel = new TextBlock
-        {
-            Text = Config.Current.UIStrings.InstallationPathLabel,
-            FontSize = 14,
-            FontWeight = FontWeights.Medium,
-            Foreground = new SolidColorBrush(Color.FromRgb(200, 200, 200)),
-            Margin = new Thickness(0, 0, 0, 10)
-        };
-        
-        var pathInputPanel = new Grid();
-        pathInputPanel.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        pathInputPanel.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        
-        _pathTextBox = new TextBox
-        {
-            Text = Config.Current.ResolvedDefaultInstallPath,
-            Height = 32,
-            Background = new SolidColorBrush(Color.FromRgb(50, 50, 50)),
-            Foreground = new SolidColorBrush(Color.FromRgb(220, 220, 220)),
-            BorderBrush = new SolidColorBrush(Color.FromRgb(80, 80, 80)),
-            BorderThickness = new Thickness(1),
-            Padding = new Thickness(8, 6, 8, 6),
-            FontSize = 12,
-            VerticalContentAlignment = VerticalAlignment.Center
-        };
-        Grid.SetColumn(_pathTextBox, 0);
-        
-        var browseButton = CreateStyledButton(Config.Current.UIStrings.BrowseButtonText, 80, 32, Color.FromRgb(60, 60, 60), Color.FromRgb(200, 200, 200));
-        browseButton.Margin = new Thickness(10, 0, 0, 0);
-        browseButton.Click += (s, e) => {
-            var selectedPath = WindowsAPI.SelectFolder(_pathTextBox.Text, $"Select {Config.Current.ApplicationName} installation folder:");
-            if (!string.IsNullOrEmpty(selectedPath))
-            {
-                _pathTextBox.Text = selectedPath;
-                UpdateSpaceInfo();
-            }
-        };
-        Grid.SetColumn(browseButton, 1);
-        
-        pathInputPanel.Children.Add(_pathTextBox);
-        pathInputPanel.Children.Add(browseButton);
         
         // Checkboxes
         var checkboxPanel = new StackPanel
@@ -261,76 +240,55 @@ public class InstallerWizard : Window
             Margin = new Thickness(0, 20, 0, 0)
         };
         
-        var desktopShortcut = new CheckBox
+        var deleteUserData = new CheckBox
         {
-            Content = Config.Current.UIStrings.Checkboxes.DesktopShortcut,
+            Content = "Delete user data",
             Foreground = new SolidColorBrush(Color.FromRgb(200, 200, 200)),
             Margin = new Thickness(0, 0, 0, 8),
             FontSize = 12
         };
         
-        var autoUpdate = new CheckBox
+        checkboxPanel.Children.Add(deleteUserData);
+        
+        // Button Panel
+        var buttonPanel = new StackPanel
         {
-            Content = Config.Current.UIStrings.Checkboxes.AutoUpdate,
-            Foreground = new SolidColorBrush(Color.FromRgb(200, 200, 200)),
-            Margin = new Thickness(0, 0, 0, 8),
-            FontSize = 12
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            Margin = new Thickness(0, 40, 0, 0)
         };
         
-        var baseToolchain = new CheckBox
-        {
-            Content = Config.Current.UIStrings.Checkboxes.BaseToolchain,
-            Foreground = new SolidColorBrush(Color.FromRgb(200, 200, 200)),
-            FontSize = 12
+        // Cancel Button
+        var cancelButton = CreateStyledButton("Cancel", 100, 35, Color.FromRgb(80, 80, 80), Color.FromRgb(220, 220, 220));
+        cancelButton.FontSize = 14;
+        cancelButton.FontWeight = FontWeights.Medium;
+        cancelButton.Margin = new Thickness(0, 0, 10, 0);
+        cancelButton.Click += (s, e) => {
+            Application.Current.Shutdown();
         };
         
-        checkboxPanel.Children.Add(desktopShortcut);
-        checkboxPanel.Children.Add(autoUpdate);
-        checkboxPanel.Children.Add(baseToolchain);
+        // Uninstall Button
+        _uninstallButton = CreateStyledButton("Uninstall", 100, 35, Color.FromRgb(200, 60, 60), Color.FromRgb(255, 255, 255));
+        _uninstallButton.FontSize = 14;
+        _uninstallButton.FontWeight = FontWeights.Medium;
         
-        // Space info
-        _spaceLabel = new TextBlock
-        {
-            FontSize = 11,
-            Foreground = new SolidColorBrush(Color.FromRgb(160, 160, 160)),
-            VerticalAlignment = VerticalAlignment.Center
-        };
-        UpdateSpaceInfo();
-        
-        // Install Button
-        _installButton = CreateStyledButton(Config.Current.UIStrings.InstallButtonText, 100, 35, Color.FromRgb(0, 120, 215), Color.FromRgb(255, 255, 255));
-        _installButton.FontSize = 14;
-        _installButton.FontWeight = FontWeights.Medium;
-        _installButton.HorizontalAlignment = HorizontalAlignment.Right;
-        
-        _installButton.Click += async (s, e) => {
-            await StartInstallation();
+        _uninstallButton.Click += async (s, e) => {
+            await StartUninstallation();
         };
         
-        // Bottom panel with space between storage info and install button
-        var bottomPanel = new Grid
-        {
-            Margin = new Thickness(0, 30, 0, 0)
-        };
-        bottomPanel.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        bottomPanel.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        buttonPanel.Children.Add(cancelButton);
+        buttonPanel.Children.Add(_uninstallButton);
         
-        Grid.SetColumn(_spaceLabel, 0);
-        Grid.SetColumn(_installButton, 1);
-        
-        bottomPanel.Children.Add(_spaceLabel);
-        bottomPanel.Children.Add(_installButton);
+        // Keep borderless style
         
         mainPanel.Children.Add(titleText);
-        mainPanel.Children.Add(pathLabel);
-        mainPanel.Children.Add(pathInputPanel);
         mainPanel.Children.Add(checkboxPanel);
-        mainPanel.Children.Add(bottomPanel);
+        mainPanel.Children.Add(buttonPanel);
         
         _contentArea.Child = mainPanel;
     }
     
-    private void ShowInstallingScreen()
+    private void ShowUninstallingScreen()
     {
         _currentScreen = 1;
         var mainPanel = new StackPanel
@@ -341,7 +299,7 @@ public class InstallerWizard : Window
         
         var titleText = new TextBlock
         {
-            Text = Config.Current.UIStrings.InstallingTitle,
+            Text = "Uninstalling...",
             FontSize = 20,
             FontWeight = FontWeights.SemiBold,
             Foreground = new SolidColorBrush(Color.FromRgb(220, 220, 220)),
@@ -350,7 +308,7 @@ public class InstallerWizard : Window
         
         _statusText = new TextBlock
         {
-            Text = Config.Current.UIStrings.PreparingText,
+            Text = "Preparing uninstallation...",
             FontSize = 12,
             Foreground = new SolidColorBrush(Color.FromRgb(180, 180, 180)),
             Margin = new Thickness(0, 0, 0, 20)
@@ -384,23 +342,23 @@ public class InstallerWizard : Window
         
         var titleText = new TextBlock
         {
-            Text = Config.Current.UIStrings.CompletedTitle,
+            Text = $"{Config.Current.ApplicationName} has been successfully uninstalled",
             FontSize = 20,
             FontWeight = FontWeights.SemiBold,
             Foreground = new SolidColorBrush(Color.FromRgb(220, 220, 220)),
             Margin = new Thickness(0, 0, 0, 30)
         };
         
-        var launchCheckbox = new CheckBox
+        var messageText = new TextBlock
         {
-            Content = Config.Current.UIStrings.ExpandString(Config.Current.UIStrings.LaunchAppText),
-            Foreground = new SolidColorBrush(Color.FromRgb(200, 200, 200)),
+            Text = "The application and its files have been removed from your system.",
             FontSize = 12,
-            IsChecked = true,
-            Margin = new Thickness(0, 0, 0, 30)
+            Foreground = new SolidColorBrush(Color.FromRgb(180, 180, 180)),
+            Margin = new Thickness(0, 0, 0, 30),
+            TextWrapping = TextWrapping.Wrap
         };
         
-        var closeButton = CreateStyledButton(Config.Current.UIStrings.CloseButtonText, 100, 35, Color.FromRgb(60, 60, 60), Color.FromRgb(200, 200, 200));
+        var closeButton = CreateStyledButton("Close", 100, 35, Color.FromRgb(60, 60, 60), Color.FromRgb(200, 200, 200));
         closeButton.FontSize = 14;
         closeButton.HorizontalAlignment = HorizontalAlignment.Right;
         closeButton.Click += (s, e) => {
@@ -408,7 +366,7 @@ public class InstallerWizard : Window
         };
         
         mainPanel.Children.Add(titleText);
-        mainPanel.Children.Add(launchCheckbox);
+        mainPanel.Children.Add(messageText);
         mainPanel.Children.Add(closeButton);
         
         _contentArea.Child = mainPanel;
@@ -429,77 +387,76 @@ public class InstallerWizard : Window
         }
     }
     
-    private async Task StartInstallation()
+    private async Task StartUninstallation()
     {
         var installPath = _pathTextBox.Text;
         if (string.IsNullOrWhiteSpace(installPath))
         {
-            MessageBox.Show("Please select an installation path.", "Path Required", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show("Please select the installation path to remove.", "Path Required", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
         
-        ShowInstallingScreen();
+        ShowUninstallingScreen();
         
         try
         {
-            // Load embedded assets
-            _statusText.Text = "Loading installation files...";
-            var assets = await Task.Run(() => WindowsAPI.LoadEmbeddedAssetsToMemory());
+            _statusText.Text = "Removing application files...";
             
-            if (assets.ContainsKey("app.zip"))
-            {
-                _statusText.Text = "Extracting files...";
-                var success = await Task.Run(() => WindowsAPI.ExtractAppZipFromMemory(
-                    assets["app.zip"], 
-                    installPath, 
-                    progress => {
-                        Dispatcher.Invoke(() => {
-                            _progressBar.Value = progress;
-                            _statusText.Text = $"{installPath}";
-                        });
+            var success = await Task.Run(() => {
+                try
+                {
+                    // Remove installation directory
+                    if (System.IO.Directory.Exists(installPath))
+                    {
+                        var totalFiles = System.IO.Directory.GetFiles(installPath, "*", System.IO.SearchOption.AllDirectories).Length;
+                        var deletedFiles = 0;
+                        
+                        foreach (var file in System.IO.Directory.GetFiles(installPath, "*", System.IO.SearchOption.AllDirectories))
+                        {
+                            try
+                            {
+                                System.IO.File.Delete(file);
+                                deletedFiles++;
+                                var progress = (double)deletedFiles / totalFiles * 100;
+                                Dispatcher.Invoke(() => {
+                                    _progressBar.Value = progress;
+                                    _statusText.Text = $"Removing: {System.IO.Path.GetFileName(file)}";
+                                });
+                            }
+                            catch { /* Continue if file can't be deleted */ }
+                        }
+                        
+                        // Remove empty directories
+                        System.IO.Directory.Delete(installPath, true);
                     }
-                ));
-               
-               if (success)
-               {
-                   // Register installation in registry
-                    WindowsAPI.CreateRegistryKey(
-                        $@"SOFTWARE\{Config.Current.ApplicationName}",
-                        "InstallPath",
-                        installPath
-                    );
                     
-                    WindowsAPI.CreateRegistryKey(
-                        $@"SOFTWARE\{Config.Current.ApplicationName}",
-                        "Version",
-                        Config.Current.Version
-                    );
-                   
-                   ShowCompletedScreen();
-               }
-               else
-               {
-                   MessageBox.Show("Installation failed. Please try again.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                   ShowWelcomeScreen();
-               }
-           }
-           else
-           {
-               MessageBox.Show("Installation package not found.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-               ShowWelcomeScreen();
-           }
-           
-           // Cleanup memory streams
-           foreach (var asset in assets.Values)
-           {
-               asset?.Dispose();
-           }
-       }
-       catch (Exception ex)
-       {
-           MessageBox.Show($"Installation error: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-           ShowWelcomeScreen();
-       }
+                    return true;
+                }
+                catch
+                {
+                    return false;
+                }
+            });
+            
+            if (success)
+            {
+                // Remove registry entries
+                _statusText.Text = "Cleaning registry...";
+                WindowsAPI.DeleteRegistryKey($@"SOFTWARE\{Config.Current.ApplicationName}");
+                
+                ShowCompletedScreen();
+            }
+            else
+            {
+                MessageBox.Show("Uninstallation failed. Some files may still remain.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                ShowWelcomeScreen();
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Uninstallation error: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            ShowWelcomeScreen();
+        }
     }
     
 

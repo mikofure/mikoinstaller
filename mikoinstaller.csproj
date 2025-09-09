@@ -2,28 +2,47 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net48</TargetFramework>
-    <StartupObject>MikoInstaller.Program</StartupObject>
+    <TargetFramework>net9.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
-    <LangVersion>latest</LangVersion>
+    <UseWindowsForms>true</UseWindowsForms>
     <ApplicationIcon>assets\icon.ico</ApplicationIcon>
+    <LangVersion>latest</LangVersion>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <!-- Performance optimizations for single-file -->
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <DebuggerSupport>false</DebuggerSupport>
+    <EnableUnsafeBinaryFormatterSerialization>false</EnableUnsafeBinaryFormatterSerialization>
+    <EventSourceSupport>false</EventSourceSupport>
+    <UseSystemResourceKeys>true</UseSystemResourceKeys>
+    <IlcOptimizationPreference>Speed</IlcOptimizationPreference>
+    <!-- <PublishTrimmed>true</PublishTrimmed> --> <!-- Disabled: WinForms not compatible with trimming -->
+    <Nullable>enable</Nullable>
+    <StartupObject Condition="'$(Configuration)' == 'Installer'">MikoInstaller.Program</StartupObject>
+    <StartupObject Condition="'$(Configuration)' == 'Uninstaller'">MikoInstaller.UninstallProgram</StartupObject>
+    <AssemblyName Condition="'$(Configuration)' == 'Installer'">mikoinstaller</AssemblyName>
+    <AssemblyName Condition="'$(Configuration)' == 'Uninstaller'">mikouninstaller</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
     <Resource Include="assets\banner.png" />
+    <Content Include="config.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <!-- <EmbeddedResource Include="assets\app.zip" /> -->
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="System.IO.Compression" Version="4.3.0" />
-    <PackageReference Include="System.IO.Compression.ZipFile" Version="4.3.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="System.Windows.Forms" />
-  </ItemGroup>
-
-  <ItemGroup>
+  <!-- Only include app.zip for installer build -->
+  <ItemGroup Condition="'$(Configuration)' == 'Installer'">
     <EmbeddedResource Include="assets\app.zip" />
   </ItemGroup>
+
+  <ItemGroup>
+	<PackageReference Include="Microsoft.Windows.Compatibility" Version="9.0.0" />
+  </ItemGroup>
+
 
 </Project>

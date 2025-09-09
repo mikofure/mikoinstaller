@@ -234,6 +234,9 @@ namespace MikoInstaller.Utils
         [XmlElement("WelcomeTitle")]
         public string WelcomeTitle { get; set; } = "Welcome to {ApplicationName} Setup";
         
+        [XmlElement("InstallPathLabel")]
+        public string InstallPathLabel { get; set; } = "Installation Path:";
+        
         [XmlElement("InstallationPathLabel")]
         public string InstallationPathLabel { get; set; } = "Installation Path:";
         
