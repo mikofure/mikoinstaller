@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<InstallerConfig>
+  <ApplicationName>MikoIDE</ApplicationName>
+  <Version>1.0.0</Version>
+  <DefaultInstallPath>$ProgramFiles\MikoIDE</DefaultInstallPath>
+  <RequiredDiskSpace>104857600</RequiredDiskSpace>
+  <RegistryPath>SOFTWARE\MikoIDE</RegistryPath>
+  <WindowTitle>MikoInstaller Setup</WindowTitle>
+  <WindowWidth>800</WindowWidth>
+  <WindowHeight>320</WindowHeight>
+  <LicenseText>I agree to the license terms and conditions</LicenseText>
+  <UIStrings>
+    <WelcomeTitle>Welcome to {ApplicationName} Installer</WelcomeTitle>
+    <InstallationPathLabel>Installation Path</InstallationPathLabel>
+    <BrowseButtonText>Choose</BrowseButtonText>
+    <InstallButtonText>Install</InstallButtonText>
+    <CloseButtonText>Close</CloseButtonText>
+    <InstallingTitle>Installing...</InstallingTitle>
+    <CompletedTitle>Installation Completed!</CompletedTitle>
+    <PreparingText>Preparing installation...</PreparingText>
+    <LoadingFilesText>Loading installation files...</LoadingFilesText>
+    <ExtractingFilesText>Extracting files...</ExtractingFilesText>
+    <LaunchAppText>Launch {ApplicationName}</LaunchAppText>
+    <SpaceInfoText>Total Required: {RequiredSpace}MB\nFree Space: {AvailableSpace}GB</SpaceInfoText>
+    <Checkboxes>
+      <DesktopShortcut>Add to desktop shortcut</DesktopShortcut>
+      <AutoUpdate>Auto Update</AutoUpdate>
+      <BaseToolchain>Install Base Toolchain</BaseToolchain>
+    </Checkboxes>
+    <ErrorMessages>
+      <PathRequired>Please select an installation path.</PathRequired>
+      <InstallationFailed>Installation failed. Please try again.</InstallationFailed>
+      <PackageNotFound>Installation package not found.</PackageNotFound>
+      <InstallationError>Installation error: {ErrorMessage}</InstallationError>
+    </ErrorMessages>
+  </UIStrings>
+  <EmbeddedAssets>
+    <Asset name="app.zip" resourcePath="mikoinstaller.assets.app.zip" />
+    <Asset name="banner.png" resourcePath="mikoinstaller.assets.banner.png" />
+  </EmbeddedAssets>
+  <RegistryEntries>
+    <Entry key="InstallPath" valueType="String" />
+    <Entry key="Version" valueType="String" />
+    <Entry key="InstallDate" valueType="String" />
+  </RegistryEntries>
+</InstallerConfig>
